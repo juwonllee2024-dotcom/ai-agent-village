@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f4f7fb">
+    <title>AI Agent Village · Local</title>
+    <link rel="stylesheet" href="./styles.css?v=20260830-pixel7">
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand-block">
+        <div class="eyebrow">LOCAL CONTROL PLANE</div>
+        <h1>AI Agent Village</h1>
+        <p>실제 에이전트 이벤트를 마을의 상태·위치·기록으로 투영합니다.</p>
+      </div>
+      <div class="top-controls">
+        <label class="project-picker">
+          <span>프로젝트</span>
+          <select id="projectSelect" aria-label="프로젝트 선택">
+            <option value="">이벤트 대기</option>
+          </select>
+        </label>
+        <span id="connectionStatus" class="connection-badge" data-connection="waiting">LOCAL · waiting for events</span>
+        <button id="demoButton" class="button button-primary" type="button">샘플 시나리오 재생 <small>(SIMULATION · 시뮬레이션)</small></button>
+      </div>
+    </header>
+
+    <div class="subbar" role="status" aria-live="polite">
+      <div><strong>현재 상태</strong><span id="activityStatus">저장된 이벤트를 기다리는 중입니다.</span></div>
+      <div class="subbar-meta"><span id="projectGoal">목표 기록 없음</span><span id="agentCount">0 agents · 0 active</span></div>
+    </div>
+
+    <main class="app-shell">
+      <section class="workspace" aria-label="AI Agent Village 마을">
+        <div class="workspace-toolbar">
+          <div>
+            <span class="eyebrow">VILLAGE MAP</span>
+            <h2>작업이 일어나는 곳</h2>
+          </div>
+          <div class="toolbar-actions">
+            <div class="zoom-group" role="group" aria-label="마을 보기 배율">
+              <button type="button" class="button button-small is-active" data-zoom="village" aria-pressed="true">Village</button>
+              <button type="button" class="button button-small" data-zoom="agent" aria-pressed="false">Agent</button>
+              <button type="button" class="button button-small" data-zoom="deep" aria-pressed="false">Deep</button>
+            </div>
+            <span class="truth-chip">기록 기반 · 가짜 진행률 없음</span>
+          </div>
+        </div>
+
+        <div id="villageViewport" class="village-viewport" data-zoom="village">
+          <div id="villageCanvas" class="village-canvas">
+            <div class="map-sky" aria-hidden="true"></div>
+            <canvas id="pixelWorldCanvas" class="pixel-world-canvas" width="1024" height="576" aria-label="AI Agent Village 2D 픽셀 월드"></canvas>
+            <svg class="route-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M14 21 C26 21 30 21 42 21" />
+              <path d="M42 21 C52 21 57 21 70 21" />
+              <path d="M42 21 C42 31 42 42 42 54" />
+              <path d="M42 54 C52 54 60 54 73 54" />
+              <path d="M42 54 C33 63 25 71 16 82" />
+              <path d="M73 54 C73 64 73 72 73 82" />
+            </svg>
+            <div class="room room-town" data-room="town-square" tabindex="0" role="button" aria-label="Town Square">
+              <span class="room-index">01</span><span class="room-title">Town Square</span><span class="room-ko">타운 스퀘어</span><span class="room-count" data-room-count="town-square">0</span>
+            </div>
+            <div class="room room-mission" data-room="mission-control" tabindex="0" role="button" aria-label="Mission Control">
+              <span class="room-index">02</span><span class="room-title">Mission Control</span><span class="room-ko">미션 컨트롤</span><span class="room-count" data-room-count="mission-control">0</span>
+            </div>
+            <div class="room room-library" data-room="research-library" tabindex="0" role="button" aria-label="Research Library">
+              <span class="room-index">03</span><span class="room-title">Research Library</span><span class="room-ko">리서치 라이브러리</span><span class="room-count" data-room-count="research-library">0</span>
+            </div>
+            <div class="room room-workshop" data-room="workshop" tabindex="0" role="button" aria-label="Workshop">
+              <span class="room-index">04</span><span class="room-title">Workshop</span><span class="room-ko">워크숍</span><span class="room-count" data-room-count="workshop">0</span>
+            </div>
+            <div class="room room-review" data-room="review-room" tabindex="0" role="button" aria-label="Review Room">
+              <span class="room-index">05</span><span class="room-title">Review Room</span><span class="room-ko">리뷰 룸</span><span class="room-count" data-room-count="review-room">0</span>
+            </div>
+            <div class="room room-academy" data-room="ai-academy" tabindex="0" role="button" aria-label="AI Academy">
+              <span class="room-index">06</span><span class="room-title">AI Academy</span><span class="room-ko">AI 아카데미</span><span class="room-count" data-room-count="ai-academy">0</span>
+            </div>
+            <div class="room room-archive" data-room="archive" tabindex="0" role="button" aria-label="Archive">
+              <span class="room-index">07</span><span class="room-title">Archive</span><span class="room-ko">아카이브</span><span class="room-count" data-room-count="archive">0</span>
+            </div>
+            <div id="agentLayer" class="agent-layer" aria-label="마을 에이전트"></div>
+            <div id="mapEmpty" class="map-empty">
+              <span class="empty-icon" aria-hidden="true">⌂</span>
+              <strong>LOCAL · waiting for events</strong>
+              <p>연결된 어댑터가 semantic event를 보내면 에이전트가 나타납니다.</p>
+              <small>샘플 시나리오는 명시적인 SIMULATION이며 실제 실행이 아닙니다.</small>
+            </div>
+          </div>
+        </div>
+
+        <section class="event-feed" aria-labelledby="eventFeedTitle">
+          <div class="section-heading">
+            <div><span class="eyebrow">APPEND-ONLY FEED</span><h3 id="eventFeedTitle">중요 이벤트</h3></div>
+            <span id="eventFeedCount" class="count-badge">0</span>
+          </div>
+          <div id="eventFeedItems" class="event-feed-items"><p class="empty-copy">아직 기록된 이벤트가 없습니다.</p></div>
+        </section>
+      </section>
+
+      <aside id="inspector" class="inspector" data-testid="villageInspector" aria-labelledby="inspectorTitle">
+        <div class="inspector-heading">
+          <div><span class="eyebrow">INSPECTOR</span><h2 id="inspectorTitle">Village summary</h2><p id="inspectorSubtitle">선택하면 전체 기록을 확인합니다.</p></div>
+          <span id="inspectorState" class="state-badge" data-state="OFFLINE">WAITING</span>
+        </div>
+        <div class="inspector-actions">
+          <button id="explainButton" type="button" class="button button-secondary">Explain Activity</button>
+          <button id="needsButton" type="button" class="button button-outline">Needs Me <span id="needsCount">0</span></button>
+        </div>
+        <div id="inspectorContent" class="inspector-content"><p class="empty-copy">회사를 선택하거나 이벤트를 입력하면 상태가 표시됩니다.</p></div>
+        <details class="event-composer">
+          <summary>semantic event 입력</summary>
+          <p>어댑터가 연결되기 전에도 canonical event 계약을 직접 시험할 수 있습니다.</p>
+          <textarea id="eventJson" spellcheck="false">{
+  "type": "AGENT_REGISTERED",
+  "projectId": "my-project",
+  "agentId": "agent-1",
+  "payload": {"name": "My Agent", "provider": "local", "role": "worker", "model": "model-id"}
+}</textarea>
+          <button id="sendEventButton" type="button" class="button button-primary button-wide">이벤트 기록</button>
+          <p id="eventInputStatus" class="form-status" role="status" aria-live="polite"></p>
+        </details>
+      </aside>
+    </main>
+
+    <footer class="footer-note">
+      <span>AI Agent Village · standalone local prototype</span>
+      <span>원본 provider 데이터는 이벤트로 보존하고, 비밀키·브라우저 토큰·chain-of-thought는 저장하지 않습니다.</span>
+    </footer>
+
+    <script src="./pixel-world-model.js?v=20260830-pixel7"></script>
+    <script src="./model.js?v=20260830-pixel7"></script>
+    <script src="./pixel-world-engine.js?v=20260830-pixel7"></script>
+    <script src="./app.js?v=20260830-pixel7"></script>
+  </body>
+</html>
